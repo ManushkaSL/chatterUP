@@ -73,7 +73,7 @@ class _ChatPageState extends State<ChatPage> {
       appBar: AppBar(
         title: Text(widget.receiverEmail),
         backgroundColor: Colors.transparent,
-        foregroundColor: const Color.fromARGB(255, 99, 99, 99),
+        foregroundColor: const Color.fromARGB(255, 141, 141, 141),
         elevation: 0,
         centerTitle: true,
       ),
@@ -127,15 +127,15 @@ class _ChatPageState extends State<ChatPage> {
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
           decoration: BoxDecoration(
             color: isMe
-                ? Theme.of(context).colorScheme.secondary
-                : Theme.of(context).colorScheme.tertiary,
+                ? Theme.of(context).colorScheme.primary
+                : Theme.of(context).colorScheme.secondary,
             borderRadius: BorderRadius.circular(12),
           ),
           child: Column(
             crossAxisAlignment:
                 isMe ? CrossAxisAlignment.end : CrossAxisAlignment.start,
             children: [
-              if (!isMe && data['senderEmail'] != null)
+              /*if (!isMe && data['senderEmail'] != null)
                 Padding(
                   padding: const EdgeInsets.only(bottom: 4),
                   child: Text(
@@ -146,15 +146,17 @@ class _ChatPageState extends State<ChatPage> {
                       color: Colors.black54,
                     ),
                   ),
-                ),
+                ),*/
               Text(
                 data['message'] ?? '',
-                style: const TextStyle(fontSize: 16),
+                style: TextStyle(
+                  fontSize: 16,
+                  color: Theme.of(context).colorScheme.surface,),
               ),
               const SizedBox(height: 4),
               Text(
                 _formatTimestamp(data['timestamp']),
-                style: const TextStyle(fontSize: 10, color: Colors.black45),
+                style: const TextStyle(fontSize: 10, color: Color.fromARGB(115, 0, 0, 0)),
               ),
             ],
           ),

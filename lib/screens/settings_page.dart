@@ -21,9 +21,9 @@ class SettingsPage extends StatelessWidget {
       body: Container(
         decoration: BoxDecoration(
           color: Theme.of(context).colorScheme.secondary,
-          borderRadius: BorderRadius.circular(8)  
+          borderRadius: BorderRadius.circular(15)  
         ),
-        margin: const EdgeInsets.all(8),
+        margin: const EdgeInsets.all(10),
         padding: const EdgeInsets.all(10),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,

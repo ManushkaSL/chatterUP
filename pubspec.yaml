@@ -25,10 +25,10 @@ dev_dependencies:
 flutter:
   uses-material-design: true
   assets:
-    - lib/assets/logo_nobg.png
+    - lib/assets/logo.png
 
 flutter_icons:  # This should NOT be inside the 'flutter:' block
   android: true
   ios: true
-  image_path: "lib/assets/logo_nobg.png"
+  image_path: "lib/assets/logo.png"
 

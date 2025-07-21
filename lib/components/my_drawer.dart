@@ -22,7 +22,7 @@ class MyDrawer extends StatelessWidget {
             //logo
             DrawerHeader(
               child: Center(
-                child: Icon(Icons.message),
+                child: Icon(Icons.person),
               )
             ),
             //home list title
