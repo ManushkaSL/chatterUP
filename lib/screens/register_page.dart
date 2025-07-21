@@ -99,7 +99,7 @@ class RegisterPage extends StatelessWidget {
               const SizedBox(height: 25,),
               //loging button
               MyBotton(
-                text: "Register",
+                text: "R E G I S T E R",
                 onTap: () => register(context),
               ),
               const SizedBox(height: 25,),

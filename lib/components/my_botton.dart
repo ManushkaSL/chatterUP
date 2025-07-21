@@ -17,11 +17,16 @@ class MyBotton extends StatelessWidget {
       child: Container(
         decoration: BoxDecoration(
           color: Theme.of(context).colorScheme.secondary,
+          borderRadius: BorderRadius.circular(25)
         ),
-        padding: EdgeInsets.all(25),
-        margin: const EdgeInsets.symmetric(horizontal: 25),
+        padding: EdgeInsets.all(15),
+        margin: const EdgeInsets.symmetric(horizontal: 90),
         child: Center(
-          child: Text(text),
+          child: Text(
+            text,
+            style: TextStyle(
+              fontWeight: FontWeight.bold
+            ),),
         ),
       ),
     );

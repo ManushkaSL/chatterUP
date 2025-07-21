@@ -29,12 +29,12 @@ class _ChatPageState extends State<ChatPage> {
   final AuthService _authService = AuthService();
   final ScrollController _scrollController = ScrollController();
 
+  FocusNode myFocusNode = FocusNode();
+
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _scrollToBottom();
-    });
+    WidgetsBinding.instance.addPostFrameCallback((_) => _scrollToBottom());
   }
 
   void _scrollToBottom() {
@@ -48,18 +48,20 @@ class _ChatPageState extends State<ChatPage> {
   }
 
   Future<void> sendMessage() async {
-    if (_messageController.text.trim().isEmpty) return;
-    
+    final message = _messageController.text.trim();
+    if (message.isEmpty) return;
+
     try {
-      await _chatServices.sendMessage(
-        widget.receiverID, 
-        _messageController.text.trim()
-      );
+      await _chatServices.sendMessage(widget.receiverID, message);
       _messageController.clear();
-      _scrollToBottom();
+
+      // Wait for message to build before scrolling
+      Future.delayed(const Duration(milliseconds: 200), () {
+        WidgetsBinding.instance.addPostFrameCallback((_) => _scrollToBottom());
+      });
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to send: ${e.toString()}'))
+        SnackBar(content: Text('Failed to send: ${e.toString()}')),
       );
     }
   }
@@ -67,8 +69,12 @@ class _ChatPageState extends State<ChatPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Theme.of(context).colorScheme.surface,
       appBar: AppBar(
         title: Text(widget.receiverEmail),
+        backgroundColor: Colors.transparent,
+        foregroundColor: const Color.fromARGB(255, 99, 99, 99),
+        elevation: 0,
         centerTitle: true,
       ),
       body: Column(
@@ -92,14 +98,14 @@ class _ChatPageState extends State<ChatPage> {
           return const Center(child: CircularProgressIndicator());
         }
 
-        final messages = snapshot.data!.docs;
+        final messages = snapshot.data?.docs ?? [];
         if (messages.isEmpty) {
           return const Center(child: Text('Start a conversation!'));
         }
 
         return ListView.builder(
           controller: _scrollController,
-          padding: const EdgeInsets.all(8),
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
           itemCount: messages.length,
           itemBuilder: (context, index) {
             return _buildMessageItem(messages[index]);
@@ -110,41 +116,62 @@ class _ChatPageState extends State<ChatPage> {
   }
 
   Widget _buildMessageItem(DocumentSnapshot doc) {
-  final data = doc.data() as Map<String, dynamic>;
-  final isMe = data['senderID'] == _authService.getCurrentUser ()!.uid;
+    try {
+      final data = doc.data() as Map<String, dynamic>;
+      final isMe = data['senderID'] == _authService.getCurrentUser()?.uid;
 
-  return Align(
-    alignment: isMe ? Alignment.centerRight : Alignment.centerLeft,
-    child: Container(
-      margin: const EdgeInsets.symmetric(vertical: 4),
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      decoration: BoxDecoration(
-        color: isMe ? Colors.blue[200] : Colors.grey[200],
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          if (!isMe) // Show email only for received messages
-            Text(
-              data['senderEmail'], // Display sender's email
-              style: const TextStyle(fontSize: 12, color: Colors.black54),
-            ),
-          Text(data['message']),
-          Text(
-            _formatTimestamp(data['timestamp']),
-            style: const TextStyle(fontSize: 10),
+      return Align(
+        alignment: isMe ? Alignment.centerRight : Alignment.centerLeft,
+        child: Container(
+          margin: const EdgeInsets.symmetric(vertical: 4),
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          decoration: BoxDecoration(
+            color: isMe
+                ? Theme.of(context).colorScheme.secondary
+                : Theme.of(context).colorScheme.tertiary,
+            borderRadius: BorderRadius.circular(12),
           ),
-        ],
-      ),
-    ),
-  );
-}
+          child: Column(
+            crossAxisAlignment:
+                isMe ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+            children: [
+              if (!isMe && data['senderEmail'] != null)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 4),
+                  child: Text(
+                    data['senderEmail'],
+                    style: const TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black54,
+                    ),
+                  ),
+                ),
+              Text(
+                data['message'] ?? '',
+                style: const TextStyle(fontSize: 16),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                _formatTimestamp(data['timestamp']),
+                style: const TextStyle(fontSize: 10, color: Colors.black45),
+              ),
+            ],
+          ),
+        ),
+      );
+    } catch (e) {
+      return const SizedBox.shrink();
+    }
+  }
 
   String _formatTimestamp(Timestamp timestamp) {
-    return DateTime.fromMillisecondsSinceEpoch(timestamp.millisecondsSinceEpoch)
-        .toString()
-        .substring(11, 16);
+    try {
+      final dt = timestamp.toDate();
+      return "${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}";
+    } catch (_) {
+      return '';
+    }
   }
 
   Widget _buildMessageInput() {
@@ -155,6 +182,7 @@ class _ChatPageState extends State<ChatPage> {
           Expanded(
             child: TextField(
               controller: _messageController,
+              focusNode: myFocusNode,
               decoration: InputDecoration(
                 hintText: 'Type a message...',
                 border: OutlineInputBorder(

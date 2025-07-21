@@ -77,7 +77,7 @@ class LoginPage extends StatelessWidget{
               const SizedBox(height: 25,),
               //loging button
               MyBotton(
-                text: "Loging",
+                text: "L O G I N G",
                 onTap: () => login(context),
               ),
               const SizedBox(height: 25,),
@@ -93,7 +93,7 @@ class LoginPage extends StatelessWidget{
                   GestureDetector(
                     onTap: onTap,
                     child: Text(
-                      "Register now", 
+                      " Register now", 
                       style: TextStyle(
                         fontWeight: FontWeight.bold,
                         color: Theme.of(context).colorScheme.primary),
