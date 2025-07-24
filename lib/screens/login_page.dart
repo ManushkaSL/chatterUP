@@ -2,108 +2,147 @@ import 'package:chatter_up/services/auth/auth_service.dart';
 import 'package:chatter_up/components/my_botton.dart';
 import 'package:chatter_up/components/my_text.dart';
 import 'package:flutter/material.dart';
+import 'dart:ui';
 
-class LoginPage extends StatelessWidget{
-
-  //email and pw controllers
-  final TextEditingController _emailController = TextEditingController();  
-  final TextEditingController _pwController = TextEditingController(); 
-
-  //tap to go to register page
+class LoginPage extends StatelessWidget {
+  final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _pwController = TextEditingController();
   final Function()? onTap;
 
   LoginPage({super.key, required this.onTap});
-  //login method
-  void login(BuildContext context) async{
-    // authService
+
+  void login(BuildContext context) async {
     final authService = AuthService();
-
-    //try login
     try {
-      await authService.signInWithEmailPassword(_emailController.text, _pwController.text);
-    }
-    // catch errors
-
-  catch(e){
-    showDialog(
-      context: context, 
-      builder: (context) => AlertDialog(
-        title: Text(e.toString()),
-      )
+      await authService.signInWithEmailPassword(
+        _emailController.text,
+        _pwController.text,
       );
-  }
+    } catch (e) {
+      if (!context.mounted) return; // safety check for async
+      showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          backgroundColor: Theme.of(context).colorScheme.surface,
+          title: Text(
+            "Login Failed",
+            style: TextStyle(color: Theme.of(context).colorScheme.error),
+          ),
+          content: Text(
+            e.toString(),
+            style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
+          ),
+        ),
+      );
+    }
   }
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+
     return Scaffold(
-      backgroundColor: Theme.of(context).colorScheme.surface,
-      body:  Center (
-        child : Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              //logo
-              Image.asset(
-                'lib/assets/logo.png',
-                height: 200,
-                width: 200,
-                fit: BoxFit.contain,
-              ),
-              //welcome back msg
-              Text(
-              "Welcome back, you've been missed",
-              style: TextStyle(
-                color: Theme.of(context).colorScheme.primary,
-                fontSize: 16
+      backgroundColor: colorScheme.background,
+      body: Center(
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(20),
+          child: BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+            child: Container(
+              margin: const EdgeInsets.symmetric(horizontal: 24),
+              padding: const EdgeInsets.all(24),
+              decoration: BoxDecoration(
+                color: colorScheme.surface.withAlpha((0.8 * 255).round()),
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(
+                  color: colorScheme.outline.withAlpha((0.1 * 255).round()),
                 ),
               ),
-
-              const SizedBox(height: 25),
-              
-              //email textfield
-              MyTextField(
-                hintText: "Email",
-                obscureText: false,
-                controller: _emailController,
-              ),
-
-              const SizedBox(height: 10,),
-              //pw textfield
-              MyTextField(
-                hintText: "Password",
-                obscureText: true,
-                controller: _pwController,
-              ),
-
-              const SizedBox(height: 25,),
-              //loging button
-              MyBotton(
-                text: "L O G I N G",
-                onTap: () => login(context),
-              ),
-              const SizedBox(height: 25,),
-              //register now
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text(
-                    "Not a memeber?",
-                    style: TextStyle(
-                      color: Theme.of(context).colorScheme.primary),
-                  ),
-                  GestureDetector(
-                    onTap: onTap,
-                    child: Text(
-                      " Register now", 
+              child: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Image.asset('lib/assets/logo.png', height: 150),
+                    const SizedBox(height: 20),
+                    Text(
+                      "Welcome to chatterUP",
                       style: TextStyle(
+                        color: colorScheme.primary,
+                        fontSize: 22,
                         fontWeight: FontWeight.bold,
-                        color: Theme.of(context).colorScheme.primary),
+                      ),
                     ),
-                  )
-                ],
+                    const SizedBox(height: 8),
+                    Text(
+                      "Let’s get you signed in.",
+                      style: TextStyle(
+                        color: colorScheme.onSurface.withAlpha(
+                          (0.6 * 255).round(),
+                        ),
+                        fontSize: 14,
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+
+                    // Use your custom MyTextField here
+                    MyTextField(
+                      hintText: "Email",
+                      obscureText: false,
+                      controller: _emailController,
+                      fillColor: colorScheme.surfaceContainerHighest.withAlpha(
+                        (0.2 * 255).round(),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+
+                    MyTextField(
+                      hintText: "Password",
+                      obscureText: true,
+                      controller: _pwController,
+                      fillColor: colorScheme.surfaceContainerHighest.withAlpha(
+                        (0.2 * 255).round(),
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+
+                    // Use your custom MyBotton for consistent button style
+                    MyBotton(
+                      text: "L O G I N",
+                      onTap: () => login(context),
+                      backgroundColor: colorScheme.secondary,
+                      textColor: colorScheme.onSecondary,
+                    ),
+                    const SizedBox(height: 20),
+
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text(
+                          "Not a member?",
+                          style: TextStyle(
+                            color: colorScheme.onSurface.withAlpha(
+                              (0.7 * 255).round(),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 6),
+                        GestureDetector(
+                          onTap: onTap,
+                          child: Text(
+                            "Register now",
+                            style: TextStyle(
+                              color: colorScheme.primary,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
               ),
-              
-            ],
+            ),
+          ),
         ),
       ),
     );

@@ -7,15 +7,15 @@ import 'package:flutter/material.dart';
 
 class HomePage extends StatelessWidget {
   HomePage({super.key});
-  
-  //chat & auth service
+
+  // Chat & Auth Services
   final ChatServices _chatService = ChatServices();
   final AuthService _authService = AuthService();
 
-  void logout(){
-    final auth = AuthService();
-    auth.signOut();
+  void logout() {
+    _authService.signOut();
   }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -25,60 +25,85 @@ class HomePage extends StatelessWidget {
         foregroundColor: Colors.grey,
         elevation: 0,
         centerTitle: true,
-        title:  Text("H O M E",
+        title: Text(
+          "H O M E",
           style: TextStyle(
             color: Theme.of(context).colorScheme.primary,
-            fontWeight: FontWeight.bold),
-            ),
+            fontWeight: FontWeight.bold,
+          ),
+        ),
       ),
       drawer: const MyDrawer(),
-      body: _buildUserList(),
+      body: Padding(
+        padding: const EdgeInsets.all(12.0),
+        child: _buildUserList(context),
+      ),
     );
   }
-  //Build a list of users exept for the current logged in user
-  Widget _buildUserList(){
+
+  // Build a list of users except for the current logged-in user
+  Widget _buildUserList(BuildContext context) {
     return StreamBuilder(
       stream: _chatService.getUsersStream(),
-      builder: (context, snapshot){
-        //errors
-        if(snapshot.hasError){
-          return const Text("Error");
+      builder: (context, snapshot) {
+        // Error case
+        if (snapshot.hasError) {
+          return const Center(child: Text("Something went wrong."));
         }
-        //loading..
-        if(snapshot.connectionState == ConnectionState.waiting){
-          return const Text("Loading..");
+
+        // Loading state
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(child: CircularProgressIndicator());
         }
-        
-        //return list view
-        return ListView(
-          children: snapshot.data!
-            .map<Widget>((userData) => _buildUserListItem(userData, context)).toList(),
-        );       
-      },
-    );
-  }
-  //build individual list tile for user
-  Widget _buildUserListItem(
-    Map<String, dynamic> userData, BuildContext context){
-    //display all users except current user
-    if(userData["email"] != _authService.getCurrentUser()!.email){
-      return UserTile(
-      text: userData["email"],
-      onTap: (){
-        //tapped on a user -> go to chat page
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => ChatPage(
-              receiverEmail: userData["email"],
-              receiverID: userData["uid"],
-            ),
-          )
+
+        final users = snapshot.data ?? [];
+
+        // Filter out the current user
+        final otherUsers = users
+            .where(
+              (userData) =>
+                  userData["email"] != _authService.getCurrentUser()!.email,
+            )
+            .toList();
+
+        if (otherUsers.isEmpty) {
+          return const Center(child: Text("No other users found."));
+        }
+
+        // Return animated list
+        return ListView.builder(
+          itemCount: otherUsers.length,
+          itemBuilder: (context, index) {
+            final userData = otherUsers[index];
+            return _buildUserListItem(userData, context);
+          },
         );
       },
     );
-    }else{
-      return Container();
-    }
+  }
+
+  // Build individual user list item
+  Widget _buildUserListItem(
+    Map<String, dynamic> userData,
+    BuildContext context,
+  ) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4.0),
+      child: UserTile(
+        text: userData["email"],
+        onTap: () {
+          // Go to chat page with selected user
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => ChatPage(
+                receiverEmail: userData["email"],
+                receiverID: userData["uid"],
+              ),
+            ),
+          );
+        },
+      ),
+    );
   }
 }

@@ -8,11 +8,11 @@ class ChatPage extends StatefulWidget {
   final String receiverID;
   final String chatRoomID;
 
-  ChatPage({
-    super.key,
-    required this.receiverEmail,
-    required this.receiverID,
-  }) : chatRoomID = _generateChatRoomID(receiverID, AuthService().getCurrentUser()!.uid);
+  ChatPage({super.key, required this.receiverEmail, required this.receiverID})
+    : chatRoomID = _generateChatRoomID(
+        receiverID,
+        AuthService().getCurrentUser()!.uid,
+      );
 
   static String _generateChatRoomID(String user1, String user2) {
     List<String> ids = [user1, user2]..sort();
@@ -28,7 +28,6 @@ class _ChatPageState extends State<ChatPage> {
   final ChatServices _chatServices = ChatServices();
   final AuthService _authService = AuthService();
   final ScrollController _scrollController = ScrollController();
-
   FocusNode myFocusNode = FocusNode();
 
   @override
@@ -54,8 +53,6 @@ class _ChatPageState extends State<ChatPage> {
     try {
       await _chatServices.sendMessage(widget.receiverID, message);
       _messageController.clear();
-
-      // Wait for message to build before scrolling
       Future.delayed(const Duration(milliseconds: 200), () {
         WidgetsBinding.instance.addPostFrameCallback((_) => _scrollToBottom());
       });
@@ -71,9 +68,11 @@ class _ChatPageState extends State<ChatPage> {
     return Scaffold(
       backgroundColor: Theme.of(context).colorScheme.surface,
       appBar: AppBar(
-        title: Text(widget.receiverEmail),
+        title: Text(
+          widget.receiverEmail,
+          style: TextStyle(color: Theme.of(context).colorScheme.primary),
+        ),
         backgroundColor: Colors.transparent,
-        foregroundColor: const Color.fromARGB(255, 141, 141, 141),
         elevation: 0,
         centerTitle: true,
       ),
@@ -105,7 +104,7 @@ class _ChatPageState extends State<ChatPage> {
 
         return ListView.builder(
           controller: _scrollController,
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 16),
           itemCount: messages.length,
           itemBuilder: (context, index) {
             return _buildMessageItem(messages[index]);
@@ -120,43 +119,54 @@ class _ChatPageState extends State<ChatPage> {
       final data = doc.data() as Map<String, dynamic>;
       final isMe = data['senderID'] == _authService.getCurrentUser()?.uid;
 
+      final messageBubbleColor = isMe
+          ? Theme.of(context).colorScheme.primary
+          : Theme.of(context).colorScheme.secondaryContainer;
+
+      final textColor = isMe
+          ? Theme.of(context).colorScheme.onPrimary
+          : Theme.of(context).colorScheme.onSecondaryContainer;
+
       return Align(
         alignment: isMe ? Alignment.centerRight : Alignment.centerLeft,
         child: Container(
-          margin: const EdgeInsets.symmetric(vertical: 4),
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          margin: const EdgeInsets.symmetric(vertical: 6),
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+          constraints: BoxConstraints(
+            maxWidth: MediaQuery.of(context).size.width * 0.75,
+          ),
           decoration: BoxDecoration(
-            color: isMe
-                ? Theme.of(context).colorScheme.primary
-                : Theme.of(context).colorScheme.secondary,
-            borderRadius: BorderRadius.circular(12),
+            color: messageBubbleColor,
+            borderRadius: BorderRadius.only(
+              topLeft: const Radius.circular(16),
+              topRight: const Radius.circular(16),
+              bottomLeft: Radius.circular(isMe ? 16 : 0),
+              bottomRight: Radius.circular(isMe ? 0 : 16),
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.05),
+                blurRadius: 6,
+                offset: const Offset(0, 2),
+              ),
+            ],
           ),
           child: Column(
-            crossAxisAlignment:
-                isMe ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+            crossAxisAlignment: isMe
+                ? CrossAxisAlignment.end
+                : CrossAxisAlignment.start,
             children: [
-              /*if (!isMe && data['senderEmail'] != null)
-                Padding(
-                  padding: const EdgeInsets.only(bottom: 4),
-                  child: Text(
-                    data['senderEmail'],
-                    style: const TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.black54,
-                    ),
-                  ),
-                ),*/
               Text(
                 data['message'] ?? '',
-                style: TextStyle(
-                  fontSize: 16,
-                  color: Theme.of(context).colorScheme.surface,),
+                style: TextStyle(fontSize: 15, color: textColor),
               ),
               const SizedBox(height: 4),
               Text(
                 _formatTimestamp(data['timestamp']),
-                style: const TextStyle(fontSize: 10, color: Color.fromARGB(115, 0, 0, 0)),
+                style: TextStyle(
+                  fontSize: 10,
+                  color: textColor.withOpacity(0.6),
+                ),
               ),
             ],
           ),
@@ -177,29 +187,58 @@ class _ChatPageState extends State<ChatPage> {
   }
 
   Widget _buildMessageInput() {
-    return Padding(
-      padding: const EdgeInsets.all(8.0),
-      child: Row(
-        children: [
-          Expanded(
-            child: TextField(
-              controller: _messageController,
-              focusNode: myFocusNode,
-              decoration: InputDecoration(
-                hintText: 'Type a message...',
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(20),
-                ),
-              ),
-              minLines: 1,
-              maxLines: 3,
+    return SafeArea(
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        decoration: BoxDecoration(
+          color: Theme.of(context).colorScheme.background,
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black12,
+              blurRadius: 4,
+              offset: Offset(0, -1),
             ),
-          ),
-          IconButton(
-            icon: const Icon(Icons.send),
-            onPressed: sendMessage,
-          ),
-        ],
+          ],
+        ),
+        child: Row(
+          children: [
+            Expanded(
+              child: TextField(
+                controller: _messageController,
+                focusNode: myFocusNode,
+                decoration: InputDecoration(
+                  hintText: 'Type a message...',
+                  hintStyle: TextStyle(
+                    color: Theme.of(
+                      context,
+                    ).colorScheme.onBackground.withOpacity(0.6),
+                  ),
+                  filled: true,
+                  fillColor: Theme.of(context).colorScheme.surfaceVariant,
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 12,
+                  ),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(25),
+                    borderSide: BorderSide.none,
+                  ),
+                ),
+                minLines: 1,
+                maxLines: 4,
+              ),
+            ),
+            const SizedBox(width: 8),
+            CircleAvatar(
+              radius: 24,
+              backgroundColor: Theme.of(context).colorScheme.primary,
+              child: IconButton(
+                icon: const Icon(Icons.send, color: Colors.white),
+                onPressed: sendMessage,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
