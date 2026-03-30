@@ -1,9 +1,9 @@
 import 'package:chatter_up/services/auth/auth_service.dart';
 import 'package:chatter_up/services/chat/chat_services.dart';
+import 'package:chatter_up/screens/call_screen.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'dart:ui';
-import 'dart:math' as math;
 
 class ChatPage extends StatefulWidget {
   final String receiverEmail;
@@ -212,12 +212,67 @@ class _ChatPageState extends State<ChatPage> with TickerProviderStateMixin {
             ),
           ),
           // Custom menu button
-          GestureDetector(
-            onTap: () {},
+          PopupMenuButton<String>(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+            onSelected: (value) {
+              if (value == 'audio') {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => CallScreen(
+                      receiverEmail: widget.receiverEmail,
+                      receiverID: widget.receiverID,
+                      callType: 'audio',
+                    ),
+                  ),
+                );
+              } else if (value == 'video') {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => CallScreen(
+                      receiverEmail: widget.receiverEmail,
+                      receiverID: widget.receiverID,
+                      callType: 'video',
+                    ),
+                  ),
+                );
+              }
+            },
+            itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
+              PopupMenuItem<String>(
+                value: 'audio',
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.call,
+                      color: Theme.of(context).colorScheme.primary,
+                    ),
+                    const SizedBox(width: 12),
+                    const Text('Audio Call'),
+                  ],
+                ),
+              ),
+              PopupMenuItem<String>(
+                value: 'video',
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.videocam,
+                      color: Theme.of(context).colorScheme.primary,
+                    ),
+                    const SizedBox(width: 12),
+                    const Text('Video Call'),
+                  ],
+                ),
+              ),
+            ],
             child: Container(
               padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.primaryContainer,
+                color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Icon(
@@ -380,17 +435,8 @@ class _ChatPageState extends State<ChatPage> with TickerProviderStateMixin {
                     maxWidth: MediaQuery.of(context).size.width * 0.75,
                   ),
                   decoration: BoxDecoration(
-                    gradient: isMe
-                        ? LinearGradient(
-                            colors: [
-                              Theme.of(context).colorScheme.primary,
-                              Theme.of(context).colorScheme.secondary,
-                            ],
-                          )
-                        : null,
-                    color: isMe
-                        ? null
-                        : Theme.of(context).colorScheme.surfaceContainerHighest,
+                    gradient: null,
+                    color: isMe ? Color(0xFF000000) : Color(0xFFE8E8E8),
                     borderRadius: BorderRadius.only(
                       topLeft: const Radius.circular(20),
                       topRight: const Radius.circular(20),
@@ -399,11 +445,7 @@ class _ChatPageState extends State<ChatPage> with TickerProviderStateMixin {
                     ),
                     boxShadow: [
                       BoxShadow(
-                        color:
-                            (isMe
-                                    ? Theme.of(context).colorScheme.primary
-                                    : Colors.black)
-                                .withAlpha((0.1 * 255).round()),
+                        color: Colors.black.withAlpha((0.1 * 255).round()),
                         blurRadius: 8,
                         offset: const Offset(0, 2),
                       ),
@@ -418,9 +460,7 @@ class _ChatPageState extends State<ChatPage> with TickerProviderStateMixin {
                         data['message'] ?? '',
                         style: TextStyle(
                           fontSize: 15,
-                          color: isMe
-                              ? Theme.of(context).colorScheme.onPrimary
-                              : Theme.of(context).colorScheme.onSurfaceVariant,
+                          color: isMe ? Colors.white : Colors.black,
                           fontWeight: FontWeight.w500,
                         ),
                       ),
@@ -433,12 +473,8 @@ class _ChatPageState extends State<ChatPage> with TickerProviderStateMixin {
                             style: TextStyle(
                               fontSize: 11,
                               color: isMe
-                                  ? Theme.of(context).colorScheme.onPrimary
-                                        .withAlpha((0.7 * 255).round())
-                                  : Theme.of(context)
-                                        .colorScheme
-                                        .onSurfaceVariant
-                                        .withAlpha((0.6 * 255).round()),
+                                  ? Colors.white.withAlpha((0.7 * 255).round())
+                                  : Colors.black.withAlpha((0.6 * 255).round()),
                             ),
                           ),
                           if (isMe) ...[
@@ -472,23 +508,11 @@ class _ChatPageState extends State<ChatPage> with TickerProviderStateMixin {
       width: 32,
       height: 32,
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: isMe
-              ? [
-                  Theme.of(context).colorScheme.primary,
-                  Theme.of(context).colorScheme.secondary,
-                ]
-              : [
-                  Theme.of(context).colorScheme.tertiary,
-                  Theme.of(context).colorScheme.tertiaryContainer,
-                ],
-        ),
+        color: isMe ? Color(0xFF000000) : Color(0xFFD0D0D0),
         shape: BoxShape.circle,
         boxShadow: [
           BoxShadow(
-            color: Theme.of(
-              context,
-            ).colorScheme.shadow.withAlpha((0.2 * 255).round()),
+            color: Colors.black.withAlpha((0.2 * 255).round()),
             blurRadius: 4,
             offset: const Offset(0, 2),
           ),
@@ -498,7 +522,7 @@ class _ChatPageState extends State<ChatPage> with TickerProviderStateMixin {
         child: Text(
           isMe ? 'You' : widget.receiverEmail[0].toUpperCase(),
           style: TextStyle(
-            color: Colors.white,
+            color: isMe ? Colors.white : Colors.black,
             fontWeight: FontWeight.bold,
             fontSize: 12,
           ),

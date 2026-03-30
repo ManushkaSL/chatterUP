@@ -1,5 +1,4 @@
 import 'package:chatter_up/components/my_drawer.dart';
-import 'package:chatter_up/components/user_tile.dart';
 import 'package:chatter_up/screens/chat_page.dart';
 import 'package:chatter_up/services/auth/auth_service.dart';
 import 'package:chatter_up/services/chat/chat_services.dart';
@@ -14,40 +13,33 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
-  // Chat & Auth Services
   final ChatServices _chatService = ChatServices();
   final AuthService _authService = AuthService();
 
+  late TabController _tabController;
   late AnimationController _headerController;
-  late AnimationController _listController;
-  late AnimationController _lineController;
+  late AnimationController _fabController;
 
   late Animation<double> _headerFadeAnimation;
   late Animation<Offset> _headerSlideAnimation;
-  late Animation<double> _listFadeAnimation;
-  late Animation<double> _lineAnimation;
+  late Animation<double> _fabScaleAnimation;
 
   @override
   void initState() {
     super.initState();
 
-    // Initialize animation controllers
+    _tabController = TabController(length: 3, vsync: this);
+
     _headerController = AnimationController(
       duration: const Duration(milliseconds: 800),
       vsync: this,
     );
 
-    _listController = AnimationController(
-      duration: const Duration(milliseconds: 1000),
+    _fabController = AnimationController(
+      duration: const Duration(milliseconds: 500),
       vsync: this,
     );
 
-    _lineController = AnimationController(
-      duration: const Duration(milliseconds: 2000),
-      vsync: this,
-    );
-
-    // Setup animations
     _headerFadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
       CurvedAnimation(parent: _headerController, curve: Curves.easeOutCubic),
     );
@@ -57,32 +49,23 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
           CurvedAnimation(parent: _headerController, curve: Curves.easeOutBack),
         );
 
-    _listFadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(
-        parent: _listController,
-        curve: const Interval(0.3, 1.0, curve: Curves.easeOut),
-      ),
+    _fabScaleAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(parent: _fabController, curve: Curves.elasticOut),
     );
 
-    _lineAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(parent: _lineController, curve: Curves.easeInOut),
-    );
-
-    // Start animations
     _startAnimations();
   }
 
   void _startAnimations() async {
     await _headerController.forward();
-    _listController.forward();
-    _lineController.repeat(reverse: true);
+    _fabController.forward();
   }
 
   @override
   void dispose() {
     _headerController.dispose();
-    _listController.dispose();
-    _lineController.dispose();
+    _fabController.dispose();
+    _tabController.dispose();
     super.dispose();
   }
 
@@ -95,205 +78,92 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     return Scaffold(
       backgroundColor: Theme.of(context).colorScheme.surface,
       appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        foregroundColor: Colors.grey,
-        elevation: 0,
-        centerTitle: true,
+        backgroundColor: Theme.of(context).colorScheme.surface,
+        foregroundColor: Theme.of(context).colorScheme.onSurface,
+        elevation: 1,
+        centerTitle: false,
         title: SlideTransition(
           position: _headerSlideAnimation,
           child: FadeTransition(
             opacity: _headerFadeAnimation,
-            child: Column(
-              children: [
-                Text(
-                  "ChatterUp",
-                  style: TextStyle(
-                    color: Theme.of(context).colorScheme.primary,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 22,
-                    letterSpacing: 1.2,
-                  ),
-                ),
-                const SizedBox(height: 2),
-                AnimatedBuilder(
-                  animation: _lineAnimation,
-                  builder: (context, child) {
-                    return Container(
-                      height: 2,
-                      width: 60 + (20 * _lineAnimation.value),
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(1),
-                        gradient: LinearGradient(
-                          colors: [
-                            Theme.of(
-                              context,
-                            ).colorScheme.primary.withOpacity(0.3),
-                            Theme.of(context).colorScheme.primary,
-                            Theme.of(
-                              context,
-                            ).colorScheme.primary.withOpacity(0.3),
-                          ],
-                          stops: [0.0, _lineAnimation.value, 1.0],
-                        ),
-                      ),
-                    );
-                  },
-                ),
-              ],
+            child: Text(
+              "ChatterUP",
+              style: TextStyle(
+                color: Theme.of(context).colorScheme.primary,
+                fontWeight: FontWeight.bold,
+                fontSize: 24,
+                letterSpacing: 1.2,
+              ),
             ),
           ),
         ),
+        actions: [
+          IconButton(
+            icon: Icon(
+              Icons.search,
+              color: Theme.of(context).colorScheme.primary,
+            ),
+            onPressed: () {},
+          ),
+          IconButton(
+            icon: Icon(
+              Icons.more_vert,
+              color: Theme.of(context).colorScheme.primary,
+            ),
+            onPressed: () {},
+          ),
+        ],
+        bottom: TabBar(
+          controller: _tabController,
+          labelColor: Theme.of(context).colorScheme.primary,
+          unselectedLabelColor:
+              Theme.of(context).colorScheme.onSurface.withOpacity(0.5),
+          indicatorColor: Theme.of(context).colorScheme.primary,
+          tabs: const [
+            Tab(text: 'Chats'),
+            Tab(text: 'Calls'),
+            Tab(text: 'Status'),
+          ],
+        ),
       ),
       drawer: const MyDrawer(),
-      body: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [
-              Theme.of(context).colorScheme.surface,
-              Theme.of(context).colorScheme.surface.withOpacity(0.8),
-            ],
-          ),
-        ),
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            children: [
-              // Animated welcome section
-              FadeTransition(
-                opacity: _headerFadeAnimation,
-                child: Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.all(20),
-                  margin: const EdgeInsets.only(bottom: 20),
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(16),
-                    gradient: LinearGradient(
-                      colors: [
-                        Theme.of(context).colorScheme.primary.withOpacity(0.1),
-                        Theme.of(
-                          context,
-                        ).colorScheme.secondary.withOpacity(0.1),
-                      ],
-                    ),
-                    border: Border.all(
-                      color: Theme.of(
-                        context,
-                      ).colorScheme.primary.withOpacity(0.2),
-                      width: 1,
-                    ),
-                  ),
-                  child: Column(
-                    children: [
-                      Icon(
-                        Icons.chat_bubble_outline_rounded,
-                        size: 32,
-                        color: Theme.of(context).colorScheme.primary,
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        "Start a Conversation",
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.w600,
-                          color: Theme.of(context).colorScheme.onSurface,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        "Select a user below to begin chatting",
-                        style: TextStyle(
-                          fontSize: 14,
-                          color: Theme.of(
-                            context,
-                          ).colorScheme.onSurface.withOpacity(0.7),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-
-              // User list with animation
-              Expanded(
-                child: FadeTransition(
-                  opacity: _listFadeAnimation,
-                  child: _buildUserList(context),
-                ),
-              ),
-            ],
+      body: TabBarView(
+        controller: _tabController,
+        children: [
+          _buildChatsTab(),
+          _buildCallsTab(),
+          _buildStatusTab(),
+        ],
+      ),
+      floatingActionButton: ScaleTransition(
+        scale: _fabScaleAnimation,
+        child: FloatingActionButton(
+          onPressed: () {
+            _showNewChatDialog();
+          },
+          backgroundColor: Theme.of(context).colorScheme.primary,
+          child: Icon(
+            Icons.add_comment_rounded,
+            color: Colors.white,
           ),
         ),
       ),
     );
   }
 
-  // Build a list of users except for the current logged-in user
-  Widget _buildUserList(BuildContext context) {
-    return StreamBuilder(
+  Widget _buildChatsTab() {
+    return StreamBuilder<List<Map<String, dynamic>>>(
       stream: _chatService.getUsersStream(),
       builder: (context, snapshot) {
-        // Error case
         if (snapshot.hasError) {
-          return Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(
-                  Icons.error_outline_rounded,
-                  size: 64,
-                  color: Theme.of(context).colorScheme.error,
-                ),
-                const SizedBox(height: 16),
-                Text(
-                  "Something went wrong",
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w600,
-                    color: Theme.of(context).colorScheme.onSurface,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  "Please try again later",
-                  style: TextStyle(
-                    color: Theme.of(
-                      context,
-                    ).colorScheme.onSurface.withOpacity(0.7),
-                  ),
-                ),
-              ],
-            ),
-          );
+          return _buildErrorState();
         }
 
-        // Loading state
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                CircularProgressIndicator(
-                  color: Theme.of(context).colorScheme.primary,
-                ),
-                const SizedBox(height: 16),
-                Text(
-                  "Loading conversations...",
-                  style: TextStyle(
-                    color: Theme.of(
-                      context,
-                    ).colorScheme.onSurface.withOpacity(0.7),
-                  ),
-                ),
-              ],
-            ),
-          );
+          return _buildLoadingState('Loading conversations...');
         }
 
         final users = snapshot.data ?? [];
-
-        // Filter out the current user
         final otherUsers = users
             .where(
               (userData) =>
@@ -302,101 +172,36 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
             .toList();
 
         if (otherUsers.isEmpty) {
-          return Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(
-                  Icons.people_outline_rounded,
-                  size: 64,
-                  color: Theme.of(
-                    context,
-                  ).colorScheme.onSurface.withOpacity(0.5),
-                ),
-                const SizedBox(height: 16),
-                Text(
-                  "No Users Available",
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w600,
-                    color: Theme.of(context).colorScheme.onSurface,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  "Check back later for new users to chat with",
-                  style: TextStyle(
-                    color: Theme.of(
-                      context,
-                    ).colorScheme.onSurface.withOpacity(0.7),
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-              ],
-            ),
+          return _buildEmptyState(
+            'No Users Available',
+            'Check back later for new users to chat with',
           );
         }
 
-        // Return animated list
         return ListView.builder(
-          physics: const BouncingScrollPhysics(),
+          padding: const EdgeInsets.all(8),
           itemCount: otherUsers.length,
           itemBuilder: (context, index) {
             final userData = otherUsers[index];
-            return AnimatedContainer(
-              duration: Duration(milliseconds: 300 + (index * 100)),
-              curve: Curves.easeOutBack,
-              child: SlideTransition(
-                position:
-                    Tween<Offset>(
-                      begin: const Offset(1, 0),
-                      end: Offset.zero,
-                    ).animate(
-                      CurvedAnimation(
-                        parent: _listController,
-                        curve: Interval(
-                          (index * 0.1).clamp(0.0, 1.0),
-                          ((index * 0.1) + 0.5).clamp(0.0, 1.0),
-                          curve: Curves.easeOutCubic,
-                        ),
-                      ),
-                    ),
-                child: _buildUserListItem(userData, context, index),
-              ),
-            );
+            return _buildChatTile(userData);
           },
         );
       },
     );
   }
 
-  // Build individual user list item with enhanced styling
-  Widget _buildUserListItem(
-    Map<String, dynamic> userData,
-    BuildContext context,
-    int index,
-  ) {
+  Widget _buildChatTile(Map<String, dynamic> userData) {
     return Container(
-      margin: const EdgeInsets.only(bottom: 12),
+      margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Theme.of(context).colorScheme.shadow.withOpacity(0.1),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
+        borderRadius: BorderRadius.circular(12),
       ),
       child: Material(
         color: Colors.transparent,
         child: InkWell(
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(12),
           onTap: () {
-            // Add haptic feedback
             HapticFeedback.lightImpact();
-
-            // Go to chat page with selected user
             Navigator.push(
               context,
               PageRouteBuilder(
@@ -411,10 +216,8 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                       const end = Offset.zero;
                       const curve = Curves.easeInOutCubic;
 
-                      var tween = Tween(
-                        begin: begin,
-                        end: end,
-                      ).chain(CurveTween(curve: curve));
+                      var tween = Tween(begin: begin, end: end)
+                          .chain(CurveTween(curve: curve));
 
                       return SlideTransition(
                         position: animation.drive(tween),
@@ -425,59 +228,42 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
               ),
             );
           },
-          child: Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(16),
-              gradient: LinearGradient(
-                colors: [
-                  Theme.of(context).colorScheme.surface,
-                  Theme.of(context).colorScheme.surface.withOpacity(0.8),
-                ],
-              ),
-              border: Border.all(
-                color: Theme.of(context).colorScheme.outline.withOpacity(0.2),
-                width: 1,
-              ),
-            ),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             child: Row(
               children: [
-                // User avatar with animated border
                 Container(
-                  width: 50,
-                  height: 50,
+                  width: 56,
+                  height: 56,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    gradient: LinearGradient(
-                      colors: [
-                        Theme.of(context).colorScheme.primary,
-                        Theme.of(context).colorScheme.secondary,
-                      ],
-                    ),
+                    color: Color(0xFF2A2A2A),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.2),
+                        blurRadius: 8,
+                        spreadRadius: 1,
+                      ),
+                    ],
                   ),
-                  child: Container(
-                    margin: const EdgeInsets.all(2),
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: Theme.of(context).colorScheme.surface,
-                    ),
-                    child: Icon(
-                      Icons.person_rounded,
-                      color: Theme.of(context).colorScheme.primary,
-                      size: 24,
+                  child: Center(
+                    child: Text(
+                      userData["email"][0].toUpperCase(),
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 20,
+                      ),
                     ),
                   ),
                 ),
-
                 const SizedBox(width: 16),
-
-                // User info
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        userData["email"].split('@')[0], // Show username part
+                        userData["email"].split('@')[0],
                         style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.w600,
@@ -487,35 +273,254 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                       const SizedBox(height: 4),
                       Text(
                         userData["email"],
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                         style: TextStyle(
-                          fontSize: 14,
-                          color: Theme.of(
-                            context,
-                          ).colorScheme.onSurface.withOpacity(0.7),
+                          fontSize: 13,
+                          color: Theme.of(context)
+                              .colorScheme
+                              .onSurface
+                              .withOpacity(0.6),
                         ),
                       ),
                     ],
                   ),
                 ),
-
-                // Arrow icon with animation
-                AnimatedBuilder(
-                  animation: _lineController,
-                  builder: (context, child) {
-                    return Transform.translate(
-                      offset: Offset(2 * _lineAnimation.value, 0),
-                      child: Icon(
-                        Icons.arrow_forward_ios_rounded,
-                        color: Theme.of(context).colorScheme.primary,
-                        size: 16,
-                      ),
-                    );
-                  },
+                Icon(
+                  Icons.chevron_right,
+                  color: Theme.of(context).colorScheme.primary,
                 ),
               ],
             ),
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildCallsTab() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(
+            Icons.call_outlined,
+            size: 80,
+            color: Theme.of(context).colorScheme.primary.withOpacity(0.5),
+          ),
+          const SizedBox(height: 16),
+          Text(
+            'No Calls Yet',
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.w600,
+              color: Theme.of(context).colorScheme.onSurface,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Start a call to begin',
+            style: TextStyle(
+              color: Theme.of(context)
+                  .colorScheme
+                  .onSurface
+                  .withOpacity(0.7),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildStatusTab() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(
+            Icons.history,
+            size: 80,
+            color: Theme.of(context).colorScheme.primary.withOpacity(0.5),
+          ),
+          const SizedBox(height: 16),
+          Text(
+            'Status Updates',
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.w600,
+              color: Theme.of(context).colorScheme.onSurface,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Share your moments',
+            style: TextStyle(
+              color: Theme.of(context)
+                  .colorScheme
+                  .onSurface
+                  .withOpacity(0.7),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showNewChatDialog() {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          backgroundColor: Theme.of(context).colorScheme.surface,
+          title: Text(
+            'Start New Chat',
+            style: TextStyle(
+              color: Theme.of(context).colorScheme.onSurface,
+            ),
+          ),
+          content: StreamBuilder<List<Map<String, dynamic>>>(
+            stream: _chatService.getUsersStream(),
+            builder: (context, snapshot) {
+              if (!snapshot.hasData) {
+                return const CircularProgressIndicator();
+              }
+
+              final users = snapshot.data ?? [];
+              final otherUsers = users
+                  .where(
+                    (userData) =>
+                        userData["email"] !=
+                        _authService.getCurrentUser()!.email,
+                  )
+                  .toList();
+
+              return SizedBox(
+                width: double.maxFinite,
+                child: ListView.builder(
+                  itemCount: otherUsers.length,
+                  itemBuilder: (context, index) {
+                    final userData = otherUsers[index];
+                    return ListTile(
+                      title: Text(
+                        userData["email"],
+                        style: TextStyle(
+                          color: Theme.of(context).colorScheme.onSurface,
+                        ),
+                      ),
+                      onTap: () {
+                        Navigator.pop(context);
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => ChatPage(
+                              receiverEmail: userData["email"],
+                              receiverID: userData["uid"],
+                            ),
+                          ),
+                        );
+                      },
+                    );
+                  },
+                ),
+              );
+            },
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildErrorState() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(
+            Icons.error_outline_rounded,
+            size: 64,
+            color: Theme.of(context).colorScheme.error,
+          ),
+          const SizedBox(height: 16),
+          Text(
+            "Something went wrong",
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.w600,
+              color: Theme.of(context).colorScheme.onSurface,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            "Please try again later",
+            style: TextStyle(
+              color: Theme.of(context)
+                  .colorScheme
+                  .onSurface
+                  .withOpacity(0.7),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildLoadingState(String message) {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          CircularProgressIndicator(
+            color: Theme.of(context).colorScheme.primary,
+          ),
+          const SizedBox(height: 16),
+          Text(
+            message,
+            style: TextStyle(
+              color: Theme.of(context)
+                  .colorScheme
+                  .onSurface
+                  .withOpacity(0.7),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildEmptyState(String title, String subtitle) {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(
+            Icons.people_outline_rounded,
+            size: 64,
+            color: Theme.of(context)
+                .colorScheme
+                .onSurface
+                .withOpacity(0.5),
+          ),
+          const SizedBox(height: 16),
+          Text(
+            title,
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.w600,
+              color: Theme.of(context).colorScheme.onSurface,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            subtitle,
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              color: Theme.of(context)
+                  .colorScheme
+                  .onSurface
+                  .withOpacity(0.7),
+            ),
+          ),
+        ],
       ),
     );
   }

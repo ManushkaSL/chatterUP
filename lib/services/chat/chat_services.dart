@@ -12,17 +12,28 @@ class ChatServices {
       final currentUserEmail = _auth.currentUser!.email!;
       final chatRoomID = _generateChatRoomID(currentUserID, receiverID);
 
+      // Add message to messages collection
       await _firestore
           .collection('chat_rooms')
           .doc(chatRoomID)
           .collection('messages')
           .add({
-        'senderID': currentUserID,
-        'senderEmail': currentUserEmail,
-        'receiverID': receiverID,
-        'message': message,
-        'timestamp': FieldValue.serverTimestamp(),
-      });
+            'senderID': currentUserID,
+            'senderEmail': currentUserEmail,
+            'receiverID': receiverID,
+            'message': message,
+            'timestamp': FieldValue.serverTimestamp(),
+          });
+
+      // Update chat room metadata for faster access to conversations
+      final ids = [currentUserID, receiverID]..sort();
+      await _firestore.collection('chat_rooms').doc(chatRoomID).set({
+        'user1ID': ids[0],
+        'user2ID': ids[1],
+        'lastMessage': message,
+        'lastMessageTime': FieldValue.serverTimestamp(),
+        'lastMessageFrom': currentUserEmail,
+      }, SetOptions(merge: true));
     } catch (e) {
       throw Exception('Failed to send message: $e');
     }
@@ -49,5 +60,36 @@ class ChatServices {
     return _firestore.collection("Users").snapshots().map((snapshot) {
       return snapshot.docs.map((doc) => doc.data()).toList();
     });
+  }
+
+  // Get conversations stream for the current user (chat list)
+  Stream<QuerySnapshot> getConversationsStream() {
+    final currentUserID = _auth.currentUser!.uid;
+    return _firestore
+        .collection('chat_rooms')
+        .where('user1ID', isEqualTo: currentUserID)
+        .orderBy('lastMessageTime', descending: true)
+        .snapshots();
+  }
+
+  // Delete a conversation
+  Future<void> deleteConversation(String chatRoomID) async {
+    try {
+      // Delete all messages in the chat room
+      final messagesRef = _firestore
+          .collection('chat_rooms')
+          .doc(chatRoomID)
+          .collection('messages');
+
+      final messages = await messagesRef.get();
+      for (var doc in messages.docs) {
+        await doc.reference.delete();
+      }
+
+      // Delete the chat room itself
+      await _firestore.collection('chat_rooms').doc(chatRoomID).delete();
+    } catch (e) {
+      throw Exception('Failed to delete conversation: $e');
+    }
   }
 }

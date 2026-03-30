@@ -11,6 +11,7 @@ plugins {
 android {
     namespace = "com.example.chatter_up"
     compileSdk = flutter.compileSdkVersion
+    buildToolsVersion = "35.0.0"
 
     // 🔧 Set the required NDK version for Firebase compatibility
     ndkVersion = "27.0.12077973"
@@ -28,7 +29,7 @@ android {
         applicationId = "com.example.chatter_up"
 
         // 🔧 REQUIRED: Firebase Auth 23.2.0 needs minSdk 23
-        minSdk = 23
+        minSdk = flutter.minSdkVersion
 
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode

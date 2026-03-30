@@ -1,5 +1,4 @@
 import 'package:chatter_up/services/auth/auth_service.dart';
-import 'package:chatter_up/components/my_botton.dart';
 import 'package:chatter_up/components/my_text.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
